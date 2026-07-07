@@ -1,4 +1,4 @@
-.PHONY: help up down status logs analyze-17 analyze-18 optimize-17 optimize-18 reset-17 reset-18 run-unoptimized-17 run-optimized-17 run-unoptimized-18 run-optimized-18
+.PHONY: help up down status logs analyze-17 analyze-18 optimize-17 optimize-18 reset-17 reset-18 run-unoptimized-17 run-optimized-17 run-unoptimized-18 run-optimized-18 bash17 bash18 psql17 psql18
 
 # Default target
 help:
@@ -25,6 +25,12 @@ help:
 	@echo "  make optimize-18                 Apply indexes & run ANALYZE on PG 18"
 	@echo "  make reset-17                    Reset pg_stat_statements on PG 17"
 	@echo "  make reset-18                    Reset pg_stat_statements on PG 18"
+	@echo ""
+	@echo "Interactive Access:"
+	@echo "  make bash17                      Open an interactive shell in PG 17"
+	@echo "  make bash18                      Open an interactive shell in PG 18"
+	@echo "  make psql17                      Open interactive psql console on PG 17"
+	@echo "  make psql18                      Open interactive psql console on PG 18"
 	@echo "======================================================"
 
 up:
@@ -68,3 +74,16 @@ reset-17:
 
 reset-18:
 	docker exec -i tuning_lab_pg18 psql -U postgres -d tuning_lab < scripts/reset_stats.sql
+
+bash17:
+	docker exec -it tuning_lab_pg17 sh
+
+bash18:
+	docker exec -it tuning_lab_pg18 sh
+
+psql17:
+	docker exec -it tuning_lab_pg17 psql -U postgres -d tuning_lab
+
+psql18:
+	docker exec -it tuning_lab_pg18 psql -U postgres -d tuning_lab
+

@@ -169,6 +169,25 @@ Look at the **Top Queries by Total Execution Time**:
 *   `mean_time_ms`: Average latency per run.
 *   `pct_of_total_time`: The proportion of DB time consumed by this statement. If a query takes > 50%, it's your primary target!
 
+#### Query Health Warnings & Optimization Flags:
+Our analysis script also automatically processes query profiles and flags items needing investigation under **Section 5** using the following calculations and thresholds:
+
+*   **`TEMP FILE SPILL`**
+    *   **Calculation**: `temp_blks_written > 0`
+    *   **Logic**: Triggered if a query writes any data to disk temp files. This occurs when sorting, hashing, or groupings cannot fit in the active session's `work_mem` space.
+*   **`HIGH DISK I/O`**
+    *   **Calculation**: `shared_blks_read > 500 AND (shared_blks_hit::double precision / nullif(shared_blks_hit + shared_blks_read, 0)) < 0.95`
+    *   **Logic**: Triggered when a query reads more than 500 blocks from disk and has a shared buffer cache hit ratio below 95%. This generally indicates full-table scans.
+*   **`HIGH LATENCY`**
+    *   **Calculation**: `mean_exec_time > 15` (ms)
+    *   **Logic**: Flags any query with an average execution duration greater than 15ms.
+*   **`HIGH LATENCY VARIANCE`**
+    *   **Calculation**: `max_exec_time > 100 AND max_exec_time > 5 * mean_exec_time` (ms)
+    *   **Logic**: Identifies highly unstable query latencies. Flags when the maximum execution time exceeds 100ms and is more than 5 times the mean runtime, pointing to locking contention or cold/warm caches.
+*   **`HIGH PLANNING OVERHEAD`**
+    *   **Calculation**: `total_plan_time > 0.15 * (total_plan_time + total_exec_time) AND calls > 50`
+    *   **Logic**: Triggered when parsing, compiling, and choosing plans takes up more than 15% of the total processing time (planning + execution) over a sample size of at least 50 executions.
+
 ---
 
 ### Step 3: Apply Database Optimizations

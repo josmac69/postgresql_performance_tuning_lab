@@ -16,6 +16,7 @@ services:
       postgres 
       -c shared_preload_libraries=pg_stat_statements 
       -c pg_stat_statements.track=all 
+      -c pg_stat_statements.track_planning=on 
       -c pg_stat_statements.max=10000 
       -c track_activity_query_size=2048 
       -c log_min_duration_statement=0
@@ -42,6 +43,7 @@ services:
       postgres 
       -c shared_preload_libraries=pg_stat_statements 
       -c pg_stat_statements.track=all 
+      -c pg_stat_statements.track_planning=on 
       -c pg_stat_statements.max=10000 
       -c track_activity_query_size=2048 
       -c log_min_duration_statement=0
