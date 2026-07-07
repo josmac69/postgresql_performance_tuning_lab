@@ -1,0 +1,56 @@
+services:
+  postgres17:
+    image: postgres:17-alpine
+    container_name: tuning_lab_pg17
+    ports:
+      - "5417:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tuning_lab
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - pg17_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements 
+      -c pg_stat_statements.track=all 
+      -c pg_stat_statements.max=10000 
+      -c track_activity_query_size=2048 
+      -c log_min_duration_statement=0
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tuning_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres18:
+    image: postgres:18-alpine
+    container_name: tuning_lab_pg18
+    ports:
+      - "5418:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tuning_lab
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - pg18_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    command: >
+      postgres 
+      -c shared_preload_libraries=pg_stat_statements 
+      -c pg_stat_statements.track=all 
+      -c pg_stat_statements.max=10000 
+      -c track_activity_query_size=2048 
+      -c log_min_duration_statement=0
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tuning_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg17_data:
+  pg18_data:
