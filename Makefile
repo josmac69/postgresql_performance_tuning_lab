@@ -1,4 +1,4 @@
-.PHONY: help up down status logs analyze-17 analyze-18 optimize-17 optimize-18 reset-17 reset-18 run-unoptimized-17 run-optimized-17 run-unoptimized-18 run-optimized-18 bash17 bash18 psql17 psql18
+.PHONY: help up down status logs analyze-17 analyze-18 analyze-pgsm-17 analyze-pgsm-18 optimize-17 optimize-18 reset-17 reset-18 run-unoptimized-17 run-optimized-17 run-unoptimized-18 run-optimized-18 bash17 bash18 psql17 psql18
 
 # Default target
 help:
@@ -19,6 +19,8 @@ help:
 	@echo "Diagnostics & Analysis:"
 	@echo "  make analyze-17                  Query pg_stat_statements on PG 17"
 	@echo "  make analyze-18                  Query pg_stat_statements on PG 18"
+	@echo "  make analyze-pgsm-17             Query pg_stat_monitor on PG 17"
+	@echo "  make analyze-pgsm-18             Query pg_stat_monitor on PG 18"
 	@echo ""
 	@echo "Tuning & Housekeeping:"
 	@echo "  make optimize-17                 Apply indexes & run ANALYZE on PG 17"
@@ -62,6 +64,12 @@ analyze-17:
 
 analyze-18:
 	docker exec -i tuning_lab_pg18 psql -U postgres -d tuning_lab < scripts/analyze_queries.sql
+
+analyze-pgsm-17:
+	docker exec -i tuning_lab_pg17 psql -U postgres -d tuning_lab < scripts/analyze_queries_pgsm.sql
+
+analyze-pgsm-18:
+	docker exec -i tuning_lab_pg18 psql -U postgres -d tuning_lab < scripts/analyze_queries_pgsm.sql
 
 optimize-17:
 	docker exec -i tuning_lab_pg17 psql -U postgres -d tuning_lab < scripts/apply_tuning.sql

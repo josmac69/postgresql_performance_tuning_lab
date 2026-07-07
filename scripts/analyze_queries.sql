@@ -8,6 +8,7 @@
 \echo '1. Top 5 Queries by Total Execution Time (Most CPU/IO Consuming)'
 \echo '----------------------------------------------------------------------'
 SELECT 
+    queryid,
     calls,
     round(total_exec_time::numeric, 2) AS total_time_ms,
     round(min_exec_time::numeric, 2) AS min_time_ms,
@@ -23,6 +24,7 @@ LIMIT 5;
 \echo '2. Top 5 Queries by Mean (Average) Execution Time (Highest Latency)'
 \echo '----------------------------------------------------------------------'
 SELECT 
+    queryid,
     calls,
     round(mean_exec_time::numeric, 2) AS mean_time_ms,
     round(min_exec_time::numeric, 2) AS min_time_ms,
@@ -37,6 +39,7 @@ LIMIT 5;
 \echo '3. Top 5 Queries by Shared Buffer Disk Reads (High Disk I/O Pressure)'
 \echo '----------------------------------------------------------------------'
 SELECT 
+    queryid,
     calls,
     shared_blks_read AS blocks_read_from_disk,
     shared_blks_hit AS blocks_hit_in_cache,
@@ -50,6 +53,7 @@ LIMIT 5;
 \echo '4. Planning Time vs Execution Time Analysis (Planning Overhead)'
 \echo '----------------------------------------------------------------------'
 SELECT 
+    queryid,
     plans,
     round(total_plan_time::numeric, 2) AS total_plan_time_ms,
     round(mean_plan_time::numeric, 2) AS mean_plan_time_ms,
@@ -66,6 +70,7 @@ LIMIT 5;
 \echo '5. Query Health Warnings & Optimization Flags (Bottlenecks to Check)'
 \echo '----------------------------------------------------------------------'
 SELECT 
+    queryid,
     calls,
     round(mean_exec_time::numeric, 2) AS mean_ms,
     CASE 

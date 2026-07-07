@@ -188,6 +188,53 @@ Our analysis script also automatically processes query profiles and flags items 
     *   **Calculation**: `total_plan_time > 0.15 * (total_plan_time + total_exec_time) AND calls > 50`
     *   **Logic**: Triggered when parsing, compiling, and choosing plans takes up more than 15% of the total processing time (planning + execution) over a sample size of at least 50 executions.
 
+### Step 2.5: Advanced Diagnostics using `pg_stat_monitor`
+In addition to `pg_stat_statements`, this lab includes the Percona **`pg_stat_monitor`** extension. It extends query statistics by adding time-bucket grouping, origin IP/application tracking, table access arrays (`relations`), and inline execution plan capture.
+
+To run `pg_stat_monitor` diagnostic analysis:
+
+**On PostgreSQL 17:**
+```bash
+make analyze-pgsm-17
+# Alternative: docker exec -i tuning_lab_pg17 psql -U postgres -d tuning_lab < scripts/analyze_queries_pgsm.sql
+```
+
+**On PostgreSQL 18:**
+```bash
+make analyze-pgsm-18
+# Alternative: docker exec -i tuning_lab_pg18 psql -U postgres -d tuning_lab < scripts/analyze_queries_pgsm.sql
+```
+
+> [!IMPORTANT]
+> **Data Retention Warning (Time Buckets)**: Unlike `pg_stat_statements` which aggregates statistics persistently forever (until a manual reset), `pg_stat_monitor` is designed for time-series analysis. By default, it splits data into 1-minute buckets and retains only the last 10 buckets (a 10-minute window).
+> 
+> If you run a benchmark and wait more than 10 minutes before running the analysis script, the benchmark statistics will have rotated out of the active buckets, and you will only see your own `psql` queries. **To see pg_stat_monitor in action, run the analysis script immediately after or during your benchmark runs.**
+
+#### Key metrics exposed by `pg_stat_monitor`:
+1. **Time Buckets**: View query throughput and latency in discrete time slots (e.g., `bucket_start_time` and `bucket`) to isolate transient spikes.
+2. **Client IP & Application**: Tracks where traffic originates (e.g., `client_ip` and `application_name` like `pgbench` or `psql`).
+3. **Relation Access Tracking**: Unnests the `relations` array to calculate which tables are accessed most frequently and consume the most execution time.
+4. **Logged Query Plans**: Displays the actual query execution plans (e.g., `Seq Scan`, `Hash Join`) stored directly in the `query_plan` column.
+
+#### pg_stat_monitor Health Warnings & Diagnostics Flags:
+Our `pg_stat_monitor` script evaluates specific metrics unique to Percona's extension in **Section 6** using the following rules:
+
+*   **`SEQ SCAN DETECTED`**
+    *   **Calculation**: `query_plan LIKE '%Seq Scan%' AND NOT (query LIKE '%pg_stat%')`
+    *   **Logic**: Scans the auto-captured query execution plan stored in `query_plan`. If it contains a `Seq Scan` on a user table, it flags the query immediately for index tuning.
+*   **`HIGH SYSTEM CPU`**
+    *   **Calculation**: `cpu_sys_time > 0.3 * nullif(cpu_user_time + cpu_sys_time, 0)`
+    *   **Logic**: Flags queries where operating system kernel CPU time (system calls, I/O wait, context switching) represents more than 30% of total CPU time.
+*   **`HEAVY WAL WRITER`**
+    *   **Calculation**: `wal_bytes > 10000000` (10MB)
+    *   **Logic**: Identifies queries generating more than 10MB of Write-Ahead Logs (WAL), signaling queries with heavy write/update volume or excessive index modifications.
+*   **`COMPLEX JOIN WORKLOAD`**
+    *   **Calculation**: `cardinality(relations) > 3`
+    *   **Logic**: Uses the `relations` array to find queries joining 4 or more distinct tables, highlighting potential targets for query simplification or denormalization.
+*   **`UNMANAGED CLIENT`**
+    *   **Calculation**: `application_name IS NULL OR application_name = '' OR application_name = 'psql'`
+    *   **Logic**: Flags queries run without a specified `application_name` parameter or directly from `psql`, advising the use of proper application identification in connection strings for auditability.
+
 ---
 
 ### Step 3: Apply Database Optimizations

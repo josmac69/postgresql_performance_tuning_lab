@@ -1,5 +1,6 @@
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+CREATE EXTENSION IF NOT EXISTS pg_stat_monitor;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Create Schema
@@ -42,7 +43,7 @@ INSERT INTO users (username, email, created_at)
 SELECT 
     'user_' || i AS username,
     'user_' || i || '@example.com' AS email,
-    NOW() - (random() * 365 || ' days')::INTERVAL AS created_at
+    NOW() - (random() * 365 * '1 day'::INTERVAL) AS created_at
 FROM generate_series(1, 50000) s(i);
 
 -- 2. Seed Products (5,000 records)
@@ -61,7 +62,7 @@ FROM generate_series(1, 5000) s(i);
 INSERT INTO orders (user_id, order_date, total_amount, status)
 SELECT 
     floor(random() * 50000 + 1)::INT AS user_id,
-    NOW() - (random() * 180 || ' days')::INTERVAL AS order_date,
+    NOW() - (random() * 180 * '1 day'::INTERVAL) AS order_date,
     0.00 AS total_amount,
     (ARRAY['completed', 'pending', 'cancelled', 'shipped'])[floor(random()*4)+1] AS status
 FROM generate_series(1, 150000) s(i);
